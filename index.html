@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RelayPay Support</title>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #F5F5F7;
+    color: #1A1A2E;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  header {
+    background: #ffffff;
+    border-bottom: 1px solid #E0E0E6;
+    padding: 0 40px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  /* SVG Logo recreation based on screenshot */
+  .logo-svg {
+    width: 140px;
+    height: 36px;
+  }
+
+  .header-right {
+    font-size: 13px;
+    color: #6B7280;
+  }
+
+  /* Main content */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+  }
+
+  .support-card {
+    background: #ffffff;
+    border: 1px solid #E0E0E6;
+    border-radius: 16px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .card-header {
+    text-align: center;
+  }
+
+  .card-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #0F2D6B;
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+
+  .card-header p {
+    font-size: 14px;
+    color: #6B7280;
+    line-height: 1.6;
+    max-width: 320px;
+  }
+
+  /* Status indicator */
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #6B7280;
+    background: #F5F5F7;
+    border-radius: 20px;
+    padding: 6px 16px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #9CA3AF;
+    transition: background 0.3s ease;
+  }
+
+  .status-dot.idle { background: #9CA3AF; }
+  .status-dot.connecting { background: #1A9E8F; animation: pulse 1s infinite; }
+  .status-dot.active { background: #1A9E8F; }
+  .status-dot.speaking { background: #0F2D6B; animation: pulse 0.6s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  #status-text { font-weight: 500; color: #374151; }
+
+  /* Mic button */
+  .mic-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .mic-btn {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: none;
+    background: #0F2D6B;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.15s ease;
+    position: relative;
+    outline: none;
+  }
+
+  .mic-btn:hover { background: #163580; transform: scale(1.04); }
+  .mic-btn:active { transform: scale(0.97); }
+  .mic-btn.active { background: #1A9E8F; }
+  .mic-btn.active:hover { background: #178a7d; }
+
+  .mic-btn svg {
+    width: 32px;
+    height: 32px;
+    fill: #ffffff;
+    transition: opacity 0.2s;
+  }
+
+  /* Ring animation when active */
+  .mic-btn.active::before {
+    content: '';
+    position: absolute;
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    border: 2px solid #1A9E8F;
+    animation: ring 1.5s ease-out infinite;
+    opacity: 0;
+  }
+
+  @keyframes ring {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    100% { transform: scale(1.2); opacity: 0; }
+  }
+
+  .mic-label {
+    font-size: 13px;
+    color: #6B7280;
+    font-weight: 500;
+  }
+
+  /* Transcript area */
+  .transcript-box {
+    width: 100%;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 16px;
+    min-height: 100px;
+    max-height: 180px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .transcript-box.visible { display: block; }
+
+  .transcript-msg {
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+    color: #374151;
+  }
+
+  .transcript-msg:last-child { margin-bottom: 0; }
+  .transcript-msg .speaker { font-weight: 600; }
+  .transcript-msg.assistant .speaker { color: #0F2D6B; }
+  .transcript-msg.user .speaker { color: #1A9E8F; }
+
+  /* Info row */
+  .info-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .info-item {
+    flex: 1;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .info-item .info-label {
+    font-size: 11px;
+    color: #9CA3AF;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .info-item .info-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    color: #9CA3AF;
+    border-top: 1px solid #E0E0E6;
+    background: #ffffff;
+  }
+
+  footer a { color: #1A9E8F; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <!-- Logo based on provided screenshot -->
+  <img src="./logo.png" alt="RelayPay" style="height: 36px; width: auto;" />
+  <div class="header-right">Customer Support</div>
+</header>
+
+<main>
+  <div class="support-card">
+
+    <div class="card-header">
+      <h1>How can we help you?</h1>
+      <p>Speak with our AI support agent for instant help with payments, invoicing, and account queries.</p>
+    </div>
+
+    <div class="status-row">
+      <div class="status-dot idle" id="status-dot"></div>
+      <span id="status-text">Ready to connect</span>
+    </div>
+
+    <div class="mic-container">
+      <button class="mic-btn" id="mic-btn" onclick="toggleCall()" aria-label="Start voice call">
+        <!-- Microphone icon -->
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm-1 14.93V20H9v2h6v-2h-2v-2.07A7 7 0 0 0 19 11h-2a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.93z"/>
+        </svg>
+      </button>
+      <span class="mic-label" id="mic-label">Tap to speak</span>
+    </div>
+
+    <div class="info-row">
+      <div class="info-item">
+        <div class="info-label">Duration</div>
+        <div class="info-value" id="call-duration">—</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Agent</div>
+        <div class="info-value">Alice</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Status</div>
+        <div class="info-value" id="call-status-text">Offline</div>
+      </div>
+    </div>
+
+    <div class="transcript-box" id="transcript-box"></div>
+
+  </div>
+</main>
+
+<footer>
+  &copy; 2026 RelayPay. All rights reserved. &nbsp;|&nbsp;
+  <a href="#">Privacy Policy</a> &nbsp;|&nbsp;
+  <a href="#">Terms of Service</a>
+</footer>
+
+<script type="module">
+  import Vapi from 'https://esm.sh/@vapi-ai/web';
+
+  // ─── CONFIG ───────────────────────────────────────────────────────────────
+  const VAPI_PUBLIC_KEY = "13e8a70b-2915-4829-a3bf-20058808ee3f";
+  const ASSISTANT_ID    = "6e1f7606-28d0-4284-9cb3-efc97616a880";
+  // ─────────────────────────────────────────────────────────────────────────
+
+  let vapi = null;
+  let callActive = false;
+  let durationInterval = null;
+  let seconds = 0;
+
+  const micBtn      = document.getElementById('mic-btn');
+  const micLabel    = document.getElementById('mic-label');
+  const statusDot   = document.getElementById('status-dot');
+  const statusText  = document.getElementById('status-text');
+  const callStatus  = document.getElementById('call-status-text');
+  const durationEl  = document.getElementById('call-duration');
+  const transcriptBox = document.getElementById('transcript-box');
+
+  function setStatus(state, label) {
+    statusDot.className = 'status-dot ' + state;
+    statusText.textContent = label;
+  }
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const sec = (s % 60).toString().padStart(2, '0');
+    return m + ':' + sec;
+  }
+
+  function addTranscript(role, text) {
+    transcriptBox.classList.add('visible');
+    const msg = document.createElement('div');
+    msg.className = 'transcript-msg ' + role;
+    msg.innerHTML = '<span class="speaker">' + (role === 'assistant' ? 'Alice' : 'You') + ':</span> ' + text;
+    transcriptBox.appendChild(msg);
+    transcriptBox.scrollTop = transcriptBox.scrollHeight;
+  }
+
+  async function toggleCall() {
+    if (!callActive) {
+      await startCall();
+    } else {
+      await endCall();
+    }
+  }
+
+  // Expose to HTML onclick
+  window.toggleCall = toggleCall;
+
+  async function startCall() {
+    if (!vapi) {
+      vapi = new Vapi(VAPI_PUBLIC_KEY);
+      vapi = new Vapi(VAPI_PUBLIC_KEY);
+
+      vapi.on('call-start', () => {
+        callActive = true;
+        micBtn.classList.add('active');
+        micLabel.textContent = 'Tap to end call';
+        setStatus('active', 'Connected');
+        callStatus.textContent = 'Live';
+        seconds = 0;
+        durationInterval = setInterval(() => {
+          seconds++;
+          durationEl.textContent = formatTime(seconds);
+        }, 1000);
+      });
+
+      vapi.on('call-end', () => {
+        callActive = false;
+        micBtn.classList.remove('active');
+        micLabel.textContent = 'Tap to speak';
+        setStatus('idle', 'Call ended');
+        callStatus.textContent = 'Offline';
+        clearInterval(durationInterval);
+      });
+
+      vapi.on('speech-start', () => {
+        setStatus('speaking', 'Alice is speaking...');
+      });
+
+      vapi.on('speech-end', () => {
+        setStatus('active', 'Listening...');
+      });
+
+      vapi.on('message', (msg) => {
+        if (msg.type === 'transcript' && msg.transcriptType === 'final') {
+          addTranscript(msg.role, msg.transcript);
+        }
+      });
+
+      vapi.on('error', (e) => {
+        console.error('VAPI error:', e);
+        setStatus('idle', 'Connection error — please retry');
+        micBtn.classList.remove('active');
+        micLabel.textContent = 'Tap to speak';
+        callActive = false;
+        callStatus.textContent = 'Offline';
+        clearInterval(durationInterval);
+      });
+    }
+
+    setStatus('connecting', 'Connecting...');
+    micLabel.textContent = 'Connecting...';
+    callStatus.textContent = 'Connecting';
+
+    try {
+      await vapi.start(ASSISTANT_ID);
+    } catch (err) {
+      console.error('Failed to start call:', err);
+      setStatus('idle', 'Failed to connect — please retry');
+      micLabel.textContent = 'Tap to speak';
+      callStatus.textContent = 'Offline';
+    }
+  }
+
+  async function endCall() {
+    if (vapi) {
+      await vapi.stop();
+    }
+  }
+</script>
+</body>
+</html>
