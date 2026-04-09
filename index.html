@@ -305,12 +305,14 @@
   <a href="#">Terms of Service</a>
 </footer>
 
+<script src="./config.js"></script>
+
 <script type="module">
   import Vapi from 'https://esm.sh/@vapi-ai/web';
 
-  // ─── CONFIG ───────────────────────────────────────────────────────────────
-  const VAPI_PUBLIC_KEY = "13e8a70b-2915-4829-a3bf-20058808ee3f";
-  const ASSISTANT_ID    = "6e1f7606-28d0-4284-9cb3-efc97616a880";
+  // ─── CONFIG — loaded from config.js (gitignored) ──────────────────────────
+  const VAPI_PUBLIC_KEY = window.__RELAYPAY_CONFIG__?.vapiKey ?? "";
+  const ASSISTANT_ID    = window.__RELAYPAY_CONFIG__?.assistantId ?? "";
   // ─────────────────────────────────────────────────────────────────────────
 
   let vapi = null;
